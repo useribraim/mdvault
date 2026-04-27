@@ -90,6 +90,18 @@ The backend stores immutable title/body snapshots for notes:
 - `GET /notes/{note_id}/versions` lists snapshots
 - `POST /notes/{note_id}/versions/{version_id}/restore` restores a snapshot and creates a new `restored` version
 
+## Step 9: Frontend V1
+
+The first web UI contains:
+
+- login and registration
+- note list and note creation
+- Markdown editing with CodeMirror
+- Markdown preview
+- full-text search
+- backlinks and outgoing links
+- version history and restore
+
 ## Run Locally
 
 ```bash
@@ -102,6 +114,12 @@ Then check:
 ```bash
 curl http://localhost:8000/health
 curl http://localhost:8000/health/db
+```
+
+Open the frontend:
+
+```txt
+http://localhost:3000
 ```
 
 Auth check:

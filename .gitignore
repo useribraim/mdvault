@@ -8,3 +8,8 @@ htmlcov/
 .coverage
 *.pyc
 postgres_data/
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
