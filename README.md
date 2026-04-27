@@ -70,6 +70,16 @@ The backend parses wiki-style Markdown links from note bodies:
 
 Markdown remains the source content; `note_links` is derived data for fast queries.
 
+## Step 7: PostgreSQL Full-Text Search
+
+Authenticated users can search their own active notes:
+
+- `GET /search?q=...` searches note titles and Markdown bodies
+- title matches are weighted higher than body matches
+- soft-deleted notes are excluded
+- results are scoped to the current user
+- PostgreSQL GIN index backs the weighted search vector
+
 ## Run Locally
 
 ```bash
