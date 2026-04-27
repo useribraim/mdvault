@@ -6,7 +6,9 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models.user import User
+from app.schemas.note_link import BacklinkRead, NoteLinkRead
 from app.schemas.note import NoteCreate, NoteRead, NoteUpdate
+from app.services.note_link_service import list_backlinks, list_outgoing_links
 from app.services.note_service import (
     create_note,
     list_notes,
@@ -42,6 +44,36 @@ def read_note_endpoint(
     db: Session = Depends(get_db),
 ) -> NoteRead:
     return require_note(db, current_user, note_id)
+
+
+@router.get("/{note_id}/outgoing-links", response_model=list[NoteLinkRead])
+def list_outgoing_links_endpoint(
+    note_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[NoteLinkRead]:
+    require_note(db, current_user, note_id)
+    return list_outgoing_links(db, current_user, note_id)
+
+
+@router.get("/{note_id}/backlinks", response_model=list[BacklinkRead])
+def list_backlinks_endpoint(
+    note_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[dict[str, object]]:
+    require_note(db, current_user, note_id)
+    return [
+        {
+            "id": link.id,
+            "source_note_id": source_note.id,
+            "source_note_title": source_note.title,
+            "raw_title": link.raw_title,
+            "status": link.status,
+            "created_at": link.created_at,
+        }
+        for link, source_note in list_backlinks(db, current_user, note_id)
+    ]
 
 
 @router.patch("/{note_id}", response_model=NoteRead)

@@ -2,13 +2,15 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import desc, select
+from sqlalchemy import delete, desc, select, update
 from sqlalchemy.orm import Session
 
 from app.models.folder import Folder
 from app.models.note import Note
+from app.models.note_link import NoteLink
 from app.models.user import User
 from app.schemas.note import NoteCreate, NoteUpdate
+from app.services.note_link_service import UNRESOLVED, refresh_links_for_title, sync_note_links
 
 
 def list_notes(db: Session, user: User) -> list[Note]:
@@ -61,6 +63,9 @@ def create_note(db: Session, user: User, payload: NoteCreate) -> Note:
         body_markdown=payload.body_markdown,
     )
     db.add(note)
+    db.flush()
+    sync_note_links(db, user, note)
+    refresh_links_for_title(db, user, note.title)
     db.commit()
     db.refresh(note)
     return note
@@ -76,9 +81,11 @@ def update_note(db: Session, user: User, note_id: UUID, payload: NoteUpdate) -> 
 
     if "title" in update_data and payload.title is not None:
         note.title = payload.title
+        refresh_links_for_title(db, user, note.title)
 
     if "body_markdown" in update_data:
         note.body_markdown = payload.body_markdown if payload.body_markdown is not None else ""
+        sync_note_links(db, user, note)
 
     note.version_number += 1
     db.commit()
@@ -89,4 +96,18 @@ def update_note(db: Session, user: User, note_id: UUID, payload: NoteUpdate) -> 
 def soft_delete_note(db: Session, user: User, note_id: UUID) -> None:
     note = require_note(db, user, note_id)
     note.deleted_at = datetime.now(timezone.utc)
+    db.execute(
+        delete(NoteLink).where(
+            NoteLink.user_id == user.id,
+            NoteLink.source_note_id == note.id,
+        )
+    )
+    db.execute(
+        update(NoteLink)
+        .where(
+            NoteLink.user_id == user.id,
+            NoteLink.target_note_id == note.id,
+        )
+        .values(target_note_id=None, status=UNRESOLVED)
+    )
     db.commit()

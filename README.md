@@ -58,6 +58,18 @@ Authenticated users can organize notes with folders:
 
 Folder parent relationships are scoped to the current user and cannot form cycles.
 
+## Step 6: Markdown Links And Backlinks
+
+The backend parses wiki-style Markdown links from note bodies:
+
+- `[[Note Title]]` links are extracted from `body_markdown`
+- outgoing links are stored in `note_links`
+- links can be `resolved`, `unresolved`, or `ambiguous`
+- `GET /notes/{note_id}/outgoing-links` lists links from a note
+- `GET /notes/{note_id}/backlinks` lists notes linking to a note
+
+Markdown remains the source content; `note_links` is derived data for fast queries.
+
 ## Run Locally
 
 ```bash
