@@ -46,6 +46,18 @@ Authenticated users can now manage their own Markdown notes:
 
 Each notes endpoint is scoped to the authenticated user.
 
+## Step 5: Folders
+
+Authenticated users can organize notes with folders:
+
+- `POST /folders` creates a folder
+- `GET /folders` lists the current user's folders
+- `GET /folders/{folder_id}` reads one folder
+- `PATCH /folders/{folder_id}` updates name or parent folder
+- `DELETE /folders/{folder_id}` deletes a folder while preserving notes
+
+Folder parent relationships are scoped to the current user and cannot form cycles.
+
 ## Run Locally
 
 ```bash
