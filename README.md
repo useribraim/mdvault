@@ -24,6 +24,16 @@ The first schema contains:
 
 Notes are stored as Markdown text in `notes.body_markdown`.
 
+## Step 3: Authentication Foundation
+
+The first auth slice contains:
+
+- `POST /auth/register` to create an account
+- `POST /auth/login` to return a bearer access token
+- `GET /me` to return the authenticated user
+- Argon2 password hashing
+- JWT access tokens
+
 ## Run Locally
 
 ```bash
@@ -36,6 +46,14 @@ Then check:
 ```bash
 curl http://localhost:8000/health
 curl http://localhost:8000/health/db
+```
+
+Auth check:
+
+```bash
+curl -X POST http://localhost:8000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"you@example.com","password":"strong-password"}'
 ```
 
 ## Run Migrations
