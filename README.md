@@ -80,6 +80,16 @@ Authenticated users can search their own active notes:
 - results are scoped to the current user
 - PostgreSQL GIN index backs the weighted search vector
 
+## Step 8: Version History
+
+The backend stores immutable title/body snapshots for notes:
+
+- note creation stores version `1` with reason `created`
+- title/body updates create `updated` versions
+- folder-only changes do not create content versions
+- `GET /notes/{note_id}/versions` lists snapshots
+- `POST /notes/{note_id}/versions/{version_id}/restore` restores a snapshot and creates a new `restored` version
+
 ## Run Locally
 
 ```bash

@@ -11,6 +11,7 @@ from app.models.note_link import NoteLink
 from app.models.user import User
 from app.schemas.note import NoteCreate, NoteUpdate
 from app.services.note_link_service import UNRESOLVED, refresh_links_for_title, sync_note_links
+from app.services.note_version_service import CREATED, UPDATED, create_note_version
 
 
 def list_notes(db: Session, user: User) -> list[Note]:
@@ -66,6 +67,7 @@ def create_note(db: Session, user: User, payload: NoteCreate) -> Note:
     db.flush()
     sync_note_links(db, user, note)
     refresh_links_for_title(db, user, note.title)
+    create_note_version(db, user, note, CREATED)
     db.commit()
     db.refresh(note)
     return note
@@ -74,20 +76,35 @@ def create_note(db: Session, user: User, payload: NoteCreate) -> Note:
 def update_note(db: Session, user: User, note_id: UUID, payload: NoteUpdate) -> Note:
     note = require_note(db, user, note_id)
     update_data = payload.model_dump(exclude_unset=True)
+    old_title = note.title
+    title_changed = False
+    body_changed = False
 
     if "folder_id" in update_data:
         validate_folder(db, user, payload.folder_id)
         note.folder_id = payload.folder_id
 
-    if "title" in update_data and payload.title is not None:
+    if "title" in update_data and payload.title is not None and payload.title != note.title:
         note.title = payload.title
-        refresh_links_for_title(db, user, note.title)
+        title_changed = True
 
     if "body_markdown" in update_data:
-        note.body_markdown = payload.body_markdown if payload.body_markdown is not None else ""
+        next_body = payload.body_markdown if payload.body_markdown is not None else ""
+        if next_body != note.body_markdown:
+            note.body_markdown = next_body
+            body_changed = True
+
+    if body_changed:
         sync_note_links(db, user, note)
 
-    note.version_number += 1
+    if title_changed:
+        refresh_links_for_title(db, user, old_title)
+        refresh_links_for_title(db, user, note.title)
+
+    if title_changed or body_changed:
+        note.version_number += 1
+        create_note_version(db, user, note, UPDATED)
+
     db.commit()
     db.refresh(note)
     return note

@@ -6,8 +6,9 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.note_link import BacklinkRead, NoteLinkRead
 from app.schemas.note import NoteCreate, NoteRead, NoteUpdate
+from app.schemas.note_link import BacklinkRead, NoteLinkRead
+from app.schemas.note_version import NoteVersionRead
 from app.services.note_link_service import list_backlinks, list_outgoing_links
 from app.services.note_service import (
     create_note,
@@ -16,6 +17,7 @@ from app.services.note_service import (
     soft_delete_note,
     update_note,
 )
+from app.services.note_version_service import list_note_versions, restore_note_version
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 
@@ -74,6 +76,25 @@ def list_backlinks_endpoint(
         }
         for link, source_note in list_backlinks(db, current_user, note_id)
     ]
+
+
+@router.get("/{note_id}/versions", response_model=list[NoteVersionRead])
+def list_note_versions_endpoint(
+    note_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[NoteVersionRead]:
+    return list_note_versions(db, current_user, note_id)
+
+
+@router.post("/{note_id}/versions/{version_id}/restore", response_model=NoteRead)
+def restore_note_version_endpoint(
+    note_id: UUID,
+    version_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> NoteRead:
+    return restore_note_version(db, current_user, note_id, version_id)
 
 
 @router.patch("/{note_id}", response_model=NoteRead)
