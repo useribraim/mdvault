@@ -1,26 +1,4 @@
-import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import delete
-
-from app.db.session import SessionLocal
-from app.main import app
-from app.models.user import User
-
-
-@pytest.fixture(autouse=True)
-def clean_users() -> None:
-    with SessionLocal.begin() as db:
-        db.execute(delete(User))
-
-    yield
-
-    with SessionLocal.begin() as db:
-        db.execute(delete(User))
-
-
-@pytest.fixture
-def client() -> TestClient:
-    return TestClient(app)
 
 
 def test_register_creates_user(client: TestClient) -> None:

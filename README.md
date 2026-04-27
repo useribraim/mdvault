@@ -34,6 +34,18 @@ The first auth slice contains:
 - Argon2 password hashing
 - JWT access tokens
 
+## Step 4: Notes CRUD
+
+Authenticated users can now manage their own Markdown notes:
+
+- `POST /notes` creates a note
+- `GET /notes` lists the current user's active notes
+- `GET /notes/{note_id}` reads one note
+- `PATCH /notes/{note_id}` updates title, Markdown body, or folder
+- `DELETE /notes/{note_id}` soft-deletes a note
+
+Each notes endpoint is scoped to the authenticated user.
+
 ## Run Locally
 
 ```bash
@@ -54,6 +66,15 @@ Auth check:
 curl -X POST http://localhost:8000/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"you@example.com","password":"strong-password"}'
+```
+
+Create a note after authorizing in Swagger UI or by sending a bearer token:
+
+```bash
+curl -X POST http://localhost:8000/notes \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <access_token>" \
+  -d '{"title":"First note","body_markdown":"# Hello"}'
 ```
 
 ## Run Migrations
