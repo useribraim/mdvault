@@ -2,6 +2,7 @@
 
 import CodeMirror from "@uiw/react-codemirror";
 import { markdown } from "@codemirror/lang-markdown";
+import { EditorView } from "@codemirror/view";
 import {
   Download,
   FileText,
@@ -12,6 +13,7 @@ import {
   Save,
   Search,
   Trash2,
+  X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -54,6 +56,7 @@ export default function Home() {
   const [draftBody, setDraftBody] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("edit");
   const [contextTab, setContextTab] = useState<ContextTab>("links");
+  const [isContextOpen, setIsContextOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [outgoingLinks, setOutgoingLinks] = useState<NoteLink[]>([]);
@@ -71,7 +74,7 @@ export default function Home() {
     ? selectedNote.title !== draftTitle || selectedNote.body_markdown !== draftBody
     : false;
 
-  const markdownExtensions = useMemo(() => [markdown()], []);
+  const markdownExtensions = useMemo(() => [markdown(), EditorView.lineWrapping], []);
 
   const setSession = useCallback((nextToken: string, nextUser: User) => {
     localStorage.setItem(tokenStorageKey, nextToken);
@@ -353,9 +356,9 @@ export default function Home() {
   }
 
   return (
-    <main className="grid min-h-screen grid-cols-1 bg-[#f5f7f2] text-ink lg:grid-cols-[300px_minmax(0,1fr)_320px]">
-      <aside className="border-b border-line bg-white lg:border-b-0 lg:border-r">
-        <div className="flex h-16 items-center justify-between border-b border-line px-4">
+    <main className="relative grid min-h-screen grid-cols-1 bg-[#f6f6f1] text-ink lg:grid-cols-[292px_minmax(0,1fr)]">
+      <aside className="border-b border-line/80 bg-white/95 lg:border-b-0 lg:border-r">
+        <div className="flex h-16 items-center justify-between px-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-clay">mdvault</p>
             <p className="max-w-[190px] truncate text-sm text-moss">{user.email}</p>
@@ -381,8 +384,8 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="border-b border-line p-3">
-          <div className="flex items-center border border-line bg-[#f5f7f2] px-2">
+        <div className="px-3 pb-3">
+          <div className="flex items-center rounded-md border border-line bg-[#f6f6f1] px-2">
             <Search size={16} className="text-moss" />
             <input
               className="w-full bg-transparent px-2 py-2 text-sm outline-none"
@@ -393,12 +396,12 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between border-b border-line px-4 py-3">
+        <div className="flex items-center justify-between px-4 py-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-moss">
             {searchQuery.trim() ? "Results" : "Notes"}
           </h2>
           <button
-            className="flex items-center gap-1 bg-ink px-2 py-1 text-sm font-semibold text-white disabled:opacity-60"
+            className="flex items-center gap-1 rounded-md bg-ink px-2.5 py-1.5 text-sm font-semibold text-white disabled:opacity-60"
             disabled={isBusy}
             onClick={handleCreateNote}
             type="button"
@@ -408,11 +411,11 @@ export default function Home() {
           </button>
         </div>
 
-        <nav className="max-h-[calc(100vh-184px)] overflow-auto">
+        <nav className="max-h-[calc(100vh-184px)] space-y-1 overflow-auto px-2 pb-3">
           {(searchQuery.trim() ? searchResults.map((result) => result.note) : notes).map((note) => (
             <button
-              className={`block w-full border-b border-line px-4 py-3 text-left hover:bg-[#eef2ea] ${
-                selectedNoteId === note.id ? "bg-[#e7ede2]" : "bg-white"
+              className={`block w-full rounded-md px-3 py-3 text-left transition hover:bg-[#eef2ea] ${
+                selectedNoteId === note.id ? "bg-[#e7ede2] shadow-sm" : "bg-transparent"
               }`}
               key={note.id}
               onClick={() => setSelectedNoteId(note.id)}
@@ -428,24 +431,24 @@ export default function Home() {
       </aside>
 
       <section className="flex min-h-screen min-w-0 flex-col">
-        <header className="flex min-h-16 flex-wrap items-center gap-3 border-b border-line bg-white px-4 py-3">
+        <header className="flex min-h-16 flex-wrap items-center gap-3 border-b border-line/80 bg-white/90 px-5 py-3">
           <input
-            className="min-w-0 flex-1 bg-transparent text-xl font-semibold outline-none"
+            className="min-w-0 basis-full bg-transparent text-xl font-semibold outline-none md:basis-auto md:flex-1"
             disabled={!selectedNote}
             onChange={(event) => setDraftTitle(event.target.value)}
             placeholder="Untitled"
             value={draftTitle}
           />
-          <div className="flex items-center border border-line p-1">
+          <div className="flex items-center rounded-md border border-line bg-[#f6f6f1] p-1">
             <button
-              className={`px-3 py-1 text-sm font-medium ${viewMode === "edit" ? "bg-ink text-white" : "text-ink"}`}
+              className={`rounded px-3 py-1 text-sm font-medium ${viewMode === "edit" ? "bg-ink text-white" : "text-ink"}`}
               onClick={() => setViewMode("edit")}
               type="button"
             >
               Edit
             </button>
             <button
-              className={`px-3 py-1 text-sm font-medium ${viewMode === "preview" ? "bg-ink text-white" : "text-ink"}`}
+              className={`rounded px-3 py-1 text-sm font-medium ${viewMode === "preview" ? "bg-ink text-white" : "text-ink"}`}
               onClick={() => setViewMode("preview")}
               type="button"
             >
@@ -453,7 +456,20 @@ export default function Home() {
             </button>
           </div>
           <button
-            className="flex items-center gap-2 border border-line px-3 py-2 text-sm font-semibold text-ink hover:border-moss disabled:opacity-50"
+            className={`border p-2 hover:border-moss disabled:opacity-50 ${
+              isContextOpen ? "border-moss text-moss" : "border-line text-ink"
+            }`}
+            disabled={!selectedNote}
+            onClick={() => setIsContextOpen((currentValue) => !currentValue)}
+            title="Context"
+            type="button"
+          >
+            <PanelRight size={17} />
+          </button>
+          <button
+            className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-semibold disabled:opacity-50 ${
+              isDirty ? "border-moss bg-moss text-white" : "border-line text-ink"
+            }`}
             disabled={!selectedNote || !isDirty || isBusy}
             onClick={handleSaveNote}
             type="button"
@@ -472,37 +488,62 @@ export default function Home() {
           </button>
         </header>
 
-        <div className="min-h-0 flex-1 overflow-auto p-4">
+        <div className="min-h-0 flex-1 overflow-auto px-4 py-6 md:px-8 lg:px-12">
           {selectedNote ? (
             viewMode === "edit" ? (
-              <CodeMirror
-                basicSetup={{ lineNumbers: true, foldGutter: false }}
-                extensions={markdownExtensions}
-                onChange={setDraftBody}
-                value={draftBody}
-              />
+              <div className="mx-auto h-full max-w-4xl">
+                <CodeMirror
+                  basicSetup={{ lineNumbers: true, foldGutter: false }}
+                  extensions={markdownExtensions}
+                  onChange={setDraftBody}
+                  value={draftBody}
+                />
+              </div>
             ) : (
-              <article className="markdown-preview min-h-[360px] border border-line bg-white p-5">
+              <article className="markdown-preview mx-auto min-h-[520px] max-w-4xl rounded-md border border-line/80 bg-white px-6 py-5 shadow-sm">
                 <ReactMarkdown>{draftBody || " "}</ReactMarkdown>
               </article>
             )
           ) : (
-            <div className="flex min-h-[360px] items-center justify-center border border-line bg-white text-moss">
+            <div className="mx-auto flex min-h-[520px] w-full max-w-4xl items-center justify-center rounded-md border border-line/80 bg-white text-moss shadow-sm">
               <FileText size={18} />
             </div>
           )}
         </div>
 
-        <footer className="flex min-h-12 items-center justify-between border-t border-line bg-white px-4 text-sm text-moss">
+        <footer className="flex min-h-12 items-center justify-between border-t border-line/80 bg-white/90 px-5 text-sm text-moss">
           <span>{selectedNote ? `Version ${selectedNote.version_number}` : "No note selected"}</span>
           <span>{isDirty ? "Unsaved" : message}</span>
         </footer>
       </section>
 
-      <aside className="border-t border-line bg-white lg:border-l lg:border-t-0">
-        <div className="flex h-16 items-center gap-2 border-b border-line px-4">
-          <PanelRight size={17} className="text-clay" />
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-moss">Context</h2>
+      {isContextOpen ? (
+        <button
+          aria-label="Close context overlay"
+          className="fixed inset-0 z-10 bg-ink/10"
+          onClick={() => setIsContextOpen(false)}
+          type="button"
+        />
+      ) : null}
+
+      <aside
+        className={`fixed inset-y-0 right-0 z-20 w-full max-w-[340px] transform border-l border-line bg-white shadow-xl transition-transform duration-200 ${
+          isContextOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <div className="flex h-16 items-center justify-between border-b border-line px-4">
+          <div className="flex items-center gap-2">
+            <PanelRight size={17} className="text-clay" />
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-moss">Context</h2>
+          </div>
+          <button
+            className="border border-line p-2 text-ink hover:border-moss"
+            onClick={() => setIsContextOpen(false)}
+            title="Close context"
+            type="button"
+          >
+            <X size={16} />
+          </button>
         </div>
 
         <div className="grid grid-cols-2 border-b border-line p-1">
