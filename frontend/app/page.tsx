@@ -3,6 +3,7 @@
 import CodeMirror from "@uiw/react-codemirror";
 import { markdown } from "@codemirror/lang-markdown";
 import {
+  Download,
   FileText,
   LogOut,
   PanelRight,
@@ -271,6 +272,25 @@ export default function Home() {
     });
   }
 
+  async function handleExportNotes() {
+    if (!token) {
+      return;
+    }
+
+    await runAction(async () => {
+      const zipBlob = await api.exportNotes(token);
+      const objectUrl = URL.createObjectURL(zipBlob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = "mdvault-notes.zip";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+      setMessage("Exported");
+    });
+  }
+
   if (!token || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f5f7f2] px-4 py-8">
@@ -340,14 +360,25 @@ export default function Home() {
             <p className="text-xs font-semibold uppercase tracking-wide text-clay">mdvault</p>
             <p className="max-w-[190px] truncate text-sm text-moss">{user.email}</p>
           </div>
-          <button
-            className="border border-line p-2 text-ink hover:border-clay hover:text-clay"
-            onClick={clearSession}
-            title="Log out"
-            type="button"
-          >
-            <LogOut size={17} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              className="border border-line p-2 text-ink hover:border-moss hover:text-moss disabled:opacity-60"
+              disabled={isBusy}
+              onClick={handleExportNotes}
+              title="Export notes"
+              type="button"
+            >
+              <Download size={17} />
+            </button>
+            <button
+              className="border border-line p-2 text-ink hover:border-clay hover:text-clay"
+              onClick={clearSession}
+              title="Log out"
+              type="button"
+            >
+              <LogOut size={17} />
+            </button>
+          </div>
         </div>
 
         <div className="border-b border-line p-3">

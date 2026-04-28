@@ -102,6 +102,17 @@ The first web UI contains:
 - backlinks and outgoing links
 - version history and restore
 
+## Step 10: ZIP Export
+
+Authenticated users can export their active notes:
+
+- `GET /export.zip` returns a ZIP download
+- notes are exported as `.md` files
+- folder paths are preserved inside the ZIP
+- unsafe filename characters are sanitized
+- duplicate note titles are disambiguated
+- soft-deleted notes and other users' notes are excluded
+
 ## Run Locally
 
 ```bash

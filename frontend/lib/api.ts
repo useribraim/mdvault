@@ -103,6 +103,27 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   return data as T;
 }
 
+async function download(path: string, token: string): Promise<Blob> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    headers: {
+      Accept: "application/zip",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    const detail = data?.detail;
+    const message =
+      typeof detail?.message === "string"
+        ? detail.message
+        : `Request failed with status ${response.status}`;
+    throw new ApiError(response.status, message);
+  }
+
+  return response.blob();
+}
+
 export const api = {
   register(email: string, password: string) {
     return request<User>("/auth/register", {
@@ -159,5 +180,8 @@ export const api = {
       token,
       method: "POST",
     });
+  },
+  exportNotes(token: string) {
+    return download("/export.zip", token);
   },
 };
