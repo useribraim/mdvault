@@ -94,6 +94,9 @@ def update_note(db: Session, user: User, note_id: UUID, payload: NoteUpdate) -> 
             note.body_markdown = next_body
             body_changed = True
 
+    if title_changed or body_changed:
+        db.flush()
+
     if body_changed:
         sync_note_links(db, user, note)
 

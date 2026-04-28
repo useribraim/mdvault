@@ -90,6 +90,7 @@ def restore_note_version(
     note.body_markdown = version.body_markdown
     note.version_number += 1
 
+    db.flush()
     sync_note_links(db, user, note)
     refresh_links_for_title(db, user, old_title)
     refresh_links_for_title(db, user, note.title)

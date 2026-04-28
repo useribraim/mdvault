@@ -15,7 +15,16 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
-import { api, type Backlink, type Note, type NoteLink, type NoteVersion, type SearchResult, type User } from "@/lib/api";
+import {
+  ApiError,
+  api,
+  type Backlink,
+  type Note,
+  type NoteLink,
+  type NoteVersion,
+  type SearchResult,
+  type User,
+} from "@/lib/api";
 
 type AuthMode = "login" | "register";
 type ViewMode = "edit" | "preview";
@@ -101,16 +110,25 @@ export default function Home() {
         return;
       }
 
-      const [nextOutgoing, nextBacklinks, nextVersions] = await Promise.all([
-        api.outgoingLinks(activeToken, noteId),
-        api.backlinks(activeToken, noteId),
-        api.versions(activeToken, noteId),
-      ]);
-      setOutgoingLinks(nextOutgoing);
-      setBacklinks(nextBacklinks);
-      setVersions(nextVersions);
+      try {
+        const [nextOutgoing, nextBacklinks, nextVersions] = await Promise.all([
+          api.outgoingLinks(activeToken, noteId),
+          api.backlinks(activeToken, noteId),
+          api.versions(activeToken, noteId),
+        ]);
+        setOutgoingLinks(nextOutgoing);
+        setBacklinks(nextBacklinks);
+        setVersions(nextVersions);
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          clearSession();
+          return;
+        }
+
+        setMessage(error instanceof Error ? error.message : "Could not load note context");
+      }
     },
-    [token],
+    [clearSession, token],
   );
 
   useEffect(() => {
@@ -194,6 +212,11 @@ export default function Home() {
       setNotes((currentNotes) =>
         currentNotes.map((note) => (note.id === savedNote.id ? savedNote : note)),
       );
+      setSearchResults((currentResults) =>
+        currentResults.map((result) =>
+          result.note.id === savedNote.id ? { ...result, note: savedNote } : result,
+        ),
+      );
       await refreshNoteContext(savedNote.id, token);
       setMessage("Saved");
     });
@@ -235,6 +258,11 @@ export default function Home() {
       const restoredNote = await api.restoreVersion(token, selectedNote.id, versionId);
       setNotes((currentNotes) =>
         currentNotes.map((note) => (note.id === restoredNote.id ? restoredNote : note)),
+      );
+      setSearchResults((currentResults) =>
+        currentResults.map((result) =>
+          result.note.id === restoredNote.id ? { ...result, note: restoredNote } : result,
+        ),
       );
       setDraftTitle(restoredNote.title);
       setDraftBody(restoredNote.body_markdown);

@@ -130,6 +130,27 @@ def test_creating_target_resolves_existing_unresolved_links(
     assert after_response.json()[0]["target_note_id"] == target["id"]
 
 
+def test_renaming_target_resolves_existing_unresolved_links(
+    client: TestClient,
+    auth_headers: Callable[[str], dict[str, str]],
+) -> None:
+    headers = auth_headers()
+    source = create_note(client, headers, "Index", "Open [[Later]].")
+    target = create_note(client, headers, "Untitled")
+
+    response = client.patch(
+        f"/notes/{target['id']}",
+        headers=headers,
+        json={"title": "Later"},
+    )
+    outgoing_response = client.get(f"/notes/{source['id']}/outgoing-links", headers=headers)
+
+    assert response.status_code == 200
+    assert outgoing_response.status_code == 200
+    assert outgoing_response.json()[0]["status"] == "resolved"
+    assert outgoing_response.json()[0]["target_note_id"] == target["id"]
+
+
 def test_deleting_target_marks_existing_links_unresolved(
     client: TestClient,
     auth_headers: Callable[[str], dict[str, str]],
