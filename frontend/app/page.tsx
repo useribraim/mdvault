@@ -4,14 +4,18 @@ import CodeMirror from "@uiw/react-codemirror";
 import { markdown } from "@codemirror/lang-markdown";
 import { EditorView } from "@codemirror/view";
 import {
+  ChevronRight,
   Download,
   FileText,
+  Folder,
   LogOut,
+  MoreHorizontal,
   PanelRight,
   Plus,
   RotateCcw,
   Save,
   Search,
+  Settings,
   Trash2,
   X,
 } from "lucide-react";
@@ -296,23 +300,23 @@ export default function Home() {
 
   if (!token || !user) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f5f7f2] px-4 py-8">
-        <section className="w-full max-w-sm border border-line bg-white p-5 shadow-sm">
+      <main className="flex min-h-screen items-center justify-center bg-paper px-4 py-8">
+        <section className="w-full max-w-sm rounded-2xl border border-line bg-[#fffdf7] p-6 shadow-[0_24px_80px_rgba(21,25,20,0.10)]">
           <div className="mb-5">
             <p className="text-xs font-semibold uppercase tracking-wide text-clay">mdvault</p>
-            <h1 className="mt-1 text-2xl font-semibold text-ink">Markdown workspace</h1>
+            <h1 className="mt-1 text-3xl font-semibold text-ink">Markdown workspace</h1>
           </div>
 
-          <div className="mb-4 grid grid-cols-2 border border-line p-1">
+          <div className="mb-4 grid grid-cols-2 rounded-full bg-[#eee6d4] p-1">
             <button
-              className={`px-3 py-2 text-sm font-medium ${authMode === "login" ? "bg-ink text-white" : "text-ink"}`}
+              className={`rounded-full px-3 py-2 text-sm font-medium ${authMode === "login" ? "bg-night text-white" : "text-ink"}`}
               onClick={() => setAuthMode("login")}
               type="button"
             >
               Login
             </button>
             <button
-              className={`px-3 py-2 text-sm font-medium ${authMode === "register" ? "bg-ink text-white" : "text-ink"}`}
+              className={`rounded-full px-3 py-2 text-sm font-medium ${authMode === "register" ? "bg-night text-white" : "text-ink"}`}
               onClick={() => setAuthMode("register")}
               type="button"
             >
@@ -323,7 +327,7 @@ export default function Home() {
           <label className="mb-3 block text-sm font-medium text-ink">
             Email
             <input
-              className="mt-1 w-full border border-line px-3 py-2 outline-none focus:border-moss"
+              className="mt-1 w-full rounded-lg border border-line bg-paper px-3 py-2 outline-none focus:border-moss"
               onChange={(event) => setEmail(event.target.value)}
               type="email"
               value={email}
@@ -332,7 +336,7 @@ export default function Home() {
           <label className="mb-4 block text-sm font-medium text-ink">
             Password
             <input
-              className="mt-1 w-full border border-line px-3 py-2 outline-none focus:border-moss"
+              className="mt-1 w-full rounded-lg border border-line bg-paper px-3 py-2 outline-none focus:border-moss"
               onChange={(event) => setPassword(event.target.value)}
               type="password"
               value={password}
@@ -340,7 +344,7 @@ export default function Home() {
           </label>
 
           <button
-            className="flex w-full items-center justify-center gap-2 bg-moss px-3 py-2 font-semibold text-white disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-night px-3 py-2.5 font-semibold text-white disabled:opacity-60"
             disabled={isBusy}
             onClick={handleAuth}
             type="button"
@@ -356,162 +360,157 @@ export default function Home() {
   }
 
   return (
-    <main className="relative grid min-h-screen grid-cols-1 bg-[#f6f6f1] text-ink lg:grid-cols-[292px_minmax(0,1fr)]">
-      <aside className="border-b border-line/80 bg-white/95 lg:border-b-0 lg:border-r">
-        <div className="flex h-16 items-center justify-between px-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-clay">mdvault</p>
-            <p className="max-w-[190px] truncate text-sm text-moss">{user.email}</p>
-          </div>
-          <div className="flex items-center gap-2">
+    <main className="relative grid min-h-screen grid-cols-1 bg-white text-ink lg:grid-cols-[344px_minmax(0,1fr)]">
+      <aside className="flex min-h-screen flex-col border-r border-[#d6d6d6] bg-[#f7f7f7] text-[#3f3f3f]">
+        <div className="flex h-[66px] items-center gap-2 border-b border-[#dcdcdc] px-5">
+          <span className="h-3.5 w-3.5 rounded-full bg-[#ff5f57]" />
+          <span className="h-3.5 w-3.5 rounded-full bg-[#ffbd2e]" />
+          <span className="h-3.5 w-3.5 rounded-full bg-[#28c840]" />
+        </div>
+
+        <div className="px-7 pt-5">
+          <div className="mb-7 flex items-center justify-between">
+            <Folder size={24} strokeWidth={1.6} className="text-[#6f6f6f]" />
             <button
-              className="border border-line p-2 text-ink hover:border-moss hover:text-moss disabled:opacity-60"
+              className="rounded-md p-1.5 text-[#6f6f6f] hover:bg-[#e7e7e7]"
               disabled={isBusy}
               onClick={handleExportNotes}
               title="Export notes"
               type="button"
             >
-              <Download size={17} />
-            </button>
-            <button
-              className="border border-line p-2 text-ink hover:border-clay hover:text-clay"
-              onClick={clearSession}
-              title="Log out"
-              type="button"
-            >
-              <LogOut size={17} />
+              <Download size={18} strokeWidth={1.7} />
             </button>
           </div>
-        </div>
 
-        <div className="px-3 pb-3">
-          <div className="flex items-center rounded-md border border-line bg-[#f6f6f1] px-2">
-            <Search size={16} className="text-moss" />
+          <div className="mb-5 flex items-center rounded-lg bg-white/70 px-2.5">
+            <Search size={15} className="text-[#8a8a8a]" />
             <input
-              className="w-full bg-transparent px-2 py-2 text-sm outline-none"
+              className="w-full bg-transparent px-2 py-1.5 text-sm text-[#3f3f3f] outline-none placeholder:text-[#9a9a9a]"
               onChange={(event) => handleSearch(event.target.value)}
-              placeholder="Search notes"
+              placeholder="Search"
               value={searchQuery}
             />
           </div>
         </div>
 
-        <div className="flex items-center justify-between px-4 py-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-moss">
-            {searchQuery.trim() ? "Results" : "Notes"}
-          </h2>
+        <div className="mb-2 flex items-center justify-between px-7">
+          <div className="flex items-center gap-2 text-[15px] text-[#555]">
+            <ChevronRight size={17} strokeWidth={1.8} className="text-[#8a8a8a]" />
+            <span>{searchQuery.trim() ? "Search results" : "Notes"}</span>
+          </div>
           <button
-            className="flex items-center gap-1 rounded-md bg-ink px-2.5 py-1.5 text-sm font-semibold text-white disabled:opacity-60"
+            className="rounded-md p-1.5 text-[#6f6f6f] hover:bg-[#e7e7e7] disabled:opacity-60"
             disabled={isBusy}
             onClick={handleCreateNote}
+            title="New note"
             type="button"
           >
-            <Plus size={16} />
-            New
+            <Plus size={17} />
           </button>
         </div>
 
-        <nav className="max-h-[calc(100vh-184px)] space-y-1 overflow-auto px-2 pb-3">
+        <nav className="min-h-0 flex-1 space-y-1 overflow-auto px-5 pb-5">
           {(searchQuery.trim() ? searchResults.map((result) => result.note) : notes).map((note) => (
             <button
-              className={`block w-full rounded-md px-3 py-3 text-left transition hover:bg-[#eef2ea] ${
-                selectedNoteId === note.id ? "bg-[#e7ede2] shadow-sm" : "bg-transparent"
+              className={`block w-full rounded-md px-4 py-2.5 text-left text-[15px] transition ${
+                selectedNoteId === note.id
+                  ? "bg-[#e2e2e2] text-[#1f1f1f]"
+                  : "bg-transparent text-[#4c4c4c] hover:bg-[#ededed]"
               }`}
               key={note.id}
               onClick={() => setSelectedNoteId(note.id)}
               type="button"
             >
-              <span className="block truncate text-sm font-semibold">{note.title}</span>
-              <span className="mt-1 block text-xs text-moss">
+              <span className="block truncate">{note.title}</span>
+              <span className="mt-0.5 block truncate text-xs text-[#777]">
                 v{note.version_number} · {formatDate(note.updated_at)}
               </span>
             </button>
           ))}
         </nav>
+
+        <div className="flex h-[66px] items-center justify-between border-t border-[#dcdcdc] px-7">
+          <span className="text-[15px] text-[#333]">Obsidian Vault</span>
+          <button
+            className="rounded-md p-1.5 text-[#6f6f6f] hover:bg-[#e7e7e7]"
+            onClick={clearSession}
+            title="Log out"
+            type="button"
+          >
+            <Settings size={20} strokeWidth={1.7} />
+          </button>
+        </div>
       </aside>
 
       <section className="flex min-h-screen min-w-0 flex-col">
-        <header className="flex min-h-16 flex-wrap items-center gap-3 border-b border-line/80 bg-white/90 px-5 py-3">
+        <header className="grid h-[58px] grid-cols-[1fr_auto_1fr] items-center border-b border-[#dedede] bg-white px-5">
+          <div />
+          <div className="min-w-0 max-w-md truncate text-center text-[15px] font-medium text-[#151515]">
+            {draftTitle || "Untitled"}
+          </div>
+          <div className="flex items-center justify-end gap-1.5">
+            <button
+              className="rounded-md p-1.5 text-[#555] hover:bg-[#f0f0f0] disabled:opacity-40"
+              disabled={!selectedNote || !isDirty || isBusy}
+              onClick={handleSaveNote}
+              title="Save"
+              type="button"
+            >
+              <Save size={18} strokeWidth={1.7} />
+            </button>
+            <button
+              className="rounded-md p-1.5 text-[#555] hover:bg-[#f0f0f0] disabled:opacity-40"
+              disabled={!selectedNote}
+              onClick={() => setIsContextOpen((currentValue) => !currentValue)}
+              title="Context"
+              type="button"
+            >
+              <PanelRight size={19} strokeWidth={1.7} />
+            </button>
+            <button
+              className="rounded-md p-1.5 text-[#555] hover:bg-[#f0f0f0]"
+              title="More"
+              type="button"
+            >
+              <MoreHorizontal size={20} strokeWidth={1.8} />
+            </button>
+          </div>
+        </header>
+
+        <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-white">
+          <div className="mx-auto w-full max-w-[920px] px-10 pb-10 pt-12">
           <input
-            className="min-w-0 basis-full bg-transparent text-xl font-semibold outline-none md:basis-auto md:flex-1"
+            className="mb-5 w-full bg-transparent text-[34px] font-bold leading-tight outline-none"
             disabled={!selectedNote}
             onChange={(event) => setDraftTitle(event.target.value)}
             placeholder="Untitled"
             value={draftTitle}
           />
-          <div className="flex items-center rounded-md border border-line bg-[#f6f6f1] p-1">
-            <button
-              className={`rounded px-3 py-1 text-sm font-medium ${viewMode === "edit" ? "bg-ink text-white" : "text-ink"}`}
-              onClick={() => setViewMode("edit")}
-              type="button"
-            >
-              Edit
-            </button>
-            <button
-              className={`rounded px-3 py-1 text-sm font-medium ${viewMode === "preview" ? "bg-ink text-white" : "text-ink"}`}
-              onClick={() => setViewMode("preview")}
-              type="button"
-            >
-              Preview
-            </button>
-          </div>
-          <button
-            className={`border p-2 hover:border-moss disabled:opacity-50 ${
-              isContextOpen ? "border-moss text-moss" : "border-line text-ink"
-            }`}
-            disabled={!selectedNote}
-            onClick={() => setIsContextOpen((currentValue) => !currentValue)}
-            title="Context"
-            type="button"
-          >
-            <PanelRight size={17} />
-          </button>
-          <button
-            className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-semibold disabled:opacity-50 ${
-              isDirty ? "border-moss bg-moss text-white" : "border-line text-ink"
-            }`}
-            disabled={!selectedNote || !isDirty || isBusy}
-            onClick={handleSaveNote}
-            type="button"
-          >
-            <Save size={16} />
-            Save
-          </button>
-          <button
-            className="border border-line p-2 text-clay hover:border-clay disabled:opacity-50"
-            disabled={!selectedNote || isBusy}
-            onClick={handleDeleteNote}
-            title="Delete"
-            type="button"
-          >
-            <Trash2 size={17} />
-          </button>
-        </header>
 
-        <div className="min-h-0 flex-1 overflow-auto px-4 py-6 md:px-8 lg:px-12">
           {selectedNote ? (
             viewMode === "edit" ? (
-              <div className="mx-auto h-full max-w-4xl">
+              <div className="min-h-[520px]">
                 <CodeMirror
-                  basicSetup={{ lineNumbers: true, foldGutter: false }}
+                  basicSetup={{ lineNumbers: false, foldGutter: false }}
                   extensions={markdownExtensions}
                   onChange={setDraftBody}
                   value={draftBody}
                 />
               </div>
             ) : (
-              <article className="markdown-preview mx-auto min-h-[520px] max-w-4xl rounded-md border border-line/80 bg-white px-6 py-5 shadow-sm">
+              <article className="markdown-preview min-h-[520px] text-[18px] leading-8">
                 <ReactMarkdown>{draftBody || " "}</ReactMarkdown>
               </article>
             )
           ) : (
-            <div className="mx-auto flex min-h-[520px] w-full max-w-4xl items-center justify-center rounded-md border border-line/80 bg-white text-moss shadow-sm">
+            <div className="flex min-h-[520px] items-center justify-center text-[#777]">
               <FileText size={18} />
             </div>
           )}
+          </div>
         </div>
 
-        <footer className="flex min-h-12 items-center justify-between border-t border-line/80 bg-white/90 px-5 text-sm text-moss">
+        <footer className="flex h-[66px] items-center justify-end gap-5 border-t border-[#dedede] bg-white px-8 text-sm text-[#555]">
           <span>{selectedNote ? `Version ${selectedNote.version_number}` : "No note selected"}</span>
           <span>{isDirty ? "Unsaved" : message}</span>
         </footer>
@@ -526,108 +525,106 @@ export default function Home() {
         />
       ) : null}
 
-      <aside
-        className={`fixed inset-y-0 right-0 z-20 w-full max-w-[340px] transform border-l border-line bg-white shadow-xl transition-transform duration-200 ${
-          isContextOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        <div className="flex h-16 items-center justify-between border-b border-line px-4">
-          <div className="flex items-center gap-2">
-            <PanelRight size={17} className="text-clay" />
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-moss">Context</h2>
+      {isContextOpen ? (
+        <aside className="fixed inset-y-0 right-0 z-20 w-full max-w-[360px] border-l border-line bg-[#fffdf7] shadow-[0_24px_90px_rgba(21,25,20,0.18)]">
+          <div className="flex h-16 items-center justify-between border-b border-line px-4">
+            <div className="flex items-center gap-2">
+              <PanelRight size={17} className="text-clay" />
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-moss">Context</h2>
+            </div>
+            <button
+              className="rounded-full border border-line p-2 text-ink hover:border-moss"
+              onClick={() => setIsContextOpen(false)}
+              title="Close context"
+              type="button"
+            >
+              <X size={16} />
+            </button>
           </div>
-          <button
-            className="border border-line p-2 text-ink hover:border-moss"
-            onClick={() => setIsContextOpen(false)}
-            title="Close context"
-            type="button"
-          >
-            <X size={16} />
-          </button>
-        </div>
 
-        <div className="grid grid-cols-2 border-b border-line p-1">
-          <button
-            className={`px-3 py-2 text-sm font-medium ${contextTab === "links" ? "bg-ink text-white" : "text-ink"}`}
-            onClick={() => setContextTab("links")}
-            type="button"
-          >
-            Links
-          </button>
-          <button
-            className={`px-3 py-2 text-sm font-medium ${contextTab === "versions" ? "bg-ink text-white" : "text-ink"}`}
-            onClick={() => setContextTab("versions")}
-            type="button"
-          >
-            Versions
-          </button>
-        </div>
+          <div className="grid grid-cols-2 border-b border-line bg-paper p-1">
+            <button
+              className={`rounded-full px-3 py-2 text-sm font-medium ${contextTab === "links" ? "bg-night text-white" : "text-ink"}`}
+              onClick={() => setContextTab("links")}
+              type="button"
+            >
+              Links
+            </button>
+            <button
+              className={`rounded-full px-3 py-2 text-sm font-medium ${contextTab === "versions" ? "bg-night text-white" : "text-ink"}`}
+              onClick={() => setContextTab("versions")}
+              type="button"
+            >
+              Versions
+            </button>
+          </div>
 
-        <div className="max-h-[calc(100vh-112px)] overflow-auto p-4">
-          {contextTab === "links" ? (
-            <div className="space-y-5">
-              <section>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-moss">
-                  Backlinks
-                </h3>
-                <div className="space-y-2">
-                  {backlinks.map((link) => (
-                    <button
-                      className="block w-full border border-line px-3 py-2 text-left text-sm hover:border-moss"
-                      key={link.id}
-                      onClick={() => setSelectedNoteId(link.source_note_id)}
-                      type="button"
-                    >
-                      {link.source_note_title}
-                    </button>
-                  ))}
-                  {backlinks.length === 0 ? <p className="text-sm text-moss">None</p> : null}
-                </div>
-              </section>
-
-              <section>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-moss">
-                  Outgoing
-                </h3>
-                <div className="space-y-2">
-                  {outgoingLinks.map((link) => (
-                    <div className="border border-line px-3 py-2 text-sm" key={link.id}>
-                      <div className="font-medium">{link.raw_title}</div>
-                      <div className="mt-1 text-xs capitalize text-moss">{link.status}</div>
-                    </div>
-                  ))}
-                  {outgoingLinks.length === 0 ? <p className="text-sm text-moss">None</p> : null}
-                </div>
-              </section>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {versions.map((version) => (
-                <div className="border border-line p-3" key={version.id}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold">v{version.version_number}</p>
-                      <p className="text-xs capitalize text-moss">{version.reason}</p>
-                    </div>
-                    <button
-                      className="border border-line p-2 text-ink hover:border-clay hover:text-clay"
-                      disabled={isBusy}
-                      onClick={() => handleRestoreVersion(version.id)}
-                      title="Restore"
-                      type="button"
-                    >
-                      <RotateCcw size={15} />
-                    </button>
+          <div className="max-h-[calc(100vh-112px)] overflow-auto p-4">
+            {contextTab === "links" ? (
+              <div className="space-y-5">
+                <section>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-moss">
+                    Backlinks
+                  </h3>
+                  <div className="space-y-2">
+                    {backlinks.map((link) => (
+                      <button
+                        className="block w-full rounded-xl border border-line bg-white/60 px-3 py-2 text-left text-sm hover:border-moss"
+                        key={link.id}
+                        onClick={() => setSelectedNoteId(link.source_note_id)}
+                        type="button"
+                      >
+                        {link.source_note_title}
+                      </button>
+                    ))}
+                    {backlinks.length === 0 ? <p className="text-sm text-moss">None</p> : null}
                   </div>
-                  <p className="mt-2 truncate text-sm">{version.title}</p>
-                  <p className="mt-1 text-xs text-moss">{formatDate(version.created_at)}</p>
-                </div>
-              ))}
-              {versions.length === 0 ? <p className="text-sm text-moss">None</p> : null}
-            </div>
-          )}
-        </div>
-      </aside>
+                </section>
+
+                <section>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-moss">
+                    Outgoing
+                  </h3>
+                  <div className="space-y-2">
+                    {outgoingLinks.map((link) => (
+                      <div className="rounded-xl border border-line bg-white/60 px-3 py-2 text-sm" key={link.id}>
+                        <div className="font-medium">{link.raw_title}</div>
+                        <div className="mt-1 text-xs capitalize text-moss">{link.status}</div>
+                      </div>
+                    ))}
+                    {outgoingLinks.length === 0 ? <p className="text-sm text-moss">None</p> : null}
+                  </div>
+                </section>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {versions.map((version) => (
+                  <div className="rounded-xl border border-line bg-white/60 p-3" key={version.id}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold">v{version.version_number}</p>
+                        <p className="text-xs capitalize text-moss">{version.reason}</p>
+                      </div>
+                      <button
+                        className="rounded-full border border-line p-2 text-ink hover:border-clay hover:text-clay"
+                        disabled={isBusy}
+                        onClick={() => handleRestoreVersion(version.id)}
+                        title="Restore"
+                        type="button"
+                      >
+                        <RotateCcw size={15} />
+                      </button>
+                    </div>
+                    <p className="mt-2 truncate text-sm">{version.title}</p>
+                    <p className="mt-1 text-xs text-moss">{formatDate(version.created_at)}</p>
+                  </div>
+                ))}
+                {versions.length === 0 ? <p className="text-sm text-moss">None</p> : null}
+              </div>
+            )}
+          </div>
+        </aside>
+      ) : null}
     </main>
   );
 }
