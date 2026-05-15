@@ -17,6 +17,14 @@ export type Note = {
   updated_at: string;
 };
 
+export type Folder = {
+  id: string;
+  parent_id: string | null;
+  name: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type NoteLink = {
   id: string;
   source_note_id: string;
@@ -143,11 +151,21 @@ export const api = {
   listNotes(token: string) {
     return request<Note[]>("/notes", { token });
   },
-  createNote(token: string, title: string, body_markdown = "") {
+  listFolders(token: string) {
+    return request<Folder[]>("/folders", { token });
+  },
+  createFolder(token: string, name: string, parent_id: string | null = null) {
+    return request<Folder>("/folders", {
+      token,
+      method: "POST",
+      body: { name, parent_id },
+    });
+  },
+  createNote(token: string, title: string, body_markdown = "", folder_id: string | null = null) {
     return request<Note>("/notes", {
       token,
       method: "POST",
-      body: { title, body_markdown },
+      body: { title, body_markdown, folder_id },
     });
   },
   updateNote(token: string, noteId: string, body: Partial<Pick<Note, "title" | "body_markdown" | "folder_id">>) {

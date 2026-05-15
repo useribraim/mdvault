@@ -7,7 +7,7 @@ import {
   ChevronRight,
   Download,
   FileText,
-  Folder,
+  Folder as FolderIcon,
   LogOut,
   MoreHorizontal,
   PanelRight,
@@ -19,13 +19,14 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 import {
   ApiError,
   api,
   type Backlink,
+  type Folder as VaultFolder,
   type Note,
   type NoteLink,
   type NoteVersion,
@@ -36,6 +37,8 @@ import {
 type AuthMode = "login" | "register";
 type ViewMode = "edit" | "preview";
 type ContextTab = "links" | "versions";
+type FolderSelection = "all" | "unfiled" | string;
+type FolderNode = VaultFolder & { children: FolderNode[] };
 
 const tokenStorageKey = "mdvault.token";
 
@@ -48,12 +51,45 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function buildFolderTree(folders: VaultFolder[]): FolderNode[] {
+  const nodesById = new Map<string, FolderNode>();
+  const roots: FolderNode[] = [];
+
+  folders.forEach((folder) => {
+    nodesById.set(folder.id, { ...folder, children: [] });
+  });
+
+  folders.forEach((folder) => {
+    const node = nodesById.get(folder.id);
+    if (!node) {
+      return;
+    }
+
+    const parent = folder.parent_id ? nodesById.get(folder.parent_id) : null;
+    if (parent) {
+      parent.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+
+  const sortNodes = (nodes: FolderNode[]) => {
+    nodes.sort((first, second) => first.name.localeCompare(second.name));
+    nodes.forEach((node) => sortNodes(node.children));
+  };
+  sortNodes(roots);
+
+  return roots;
+}
+
 export default function Home() {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("demo@example.com");
   const [password, setPassword] = useState("strong-password");
+  const [folders, setFolders] = useState<VaultFolder[]>([]);
+  const [selectedFolderId, setSelectedFolderId] = useState<FolderSelection>("all");
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [draftTitle, setDraftTitle] = useState("");
@@ -73,6 +109,26 @@ export default function Home() {
     () => notes.find((note) => note.id === selectedNoteId) ?? null,
     [notes, selectedNoteId],
   );
+  const selectedFolder = useMemo(
+    () => folders.find((folder) => folder.id === selectedFolderId) ?? null,
+    [folders, selectedFolderId],
+  );
+  const folderTree = useMemo(() => buildFolderTree(folders), [folders]);
+  const filteredNotes = useMemo(() => {
+    if (searchQuery.trim()) {
+      return searchResults.map((result) => result.note);
+    }
+
+    if (selectedFolderId === "all") {
+      return notes;
+    }
+
+    if (selectedFolderId === "unfiled") {
+      return notes.filter((note) => note.folder_id === null);
+    }
+
+    return notes.filter((note) => note.folder_id === selectedFolderId);
+  }, [notes, searchQuery, searchResults, selectedFolderId]);
 
   const isDirty = selectedNote
     ? selectedNote.title !== draftTitle || selectedNote.body_markdown !== draftBody
@@ -90,6 +146,8 @@ export default function Home() {
     localStorage.removeItem(tokenStorageKey);
     setToken(null);
     setUser(null);
+    setFolders([]);
+    setSelectedFolderId("all");
     setNotes([]);
     setSelectedNoteId(null);
     setSearchResults([]);
@@ -111,6 +169,11 @@ export default function Home() {
     },
     [],
   );
+
+  const loadFolders = useCallback(async (activeToken: string) => {
+    const loadedFolders = await api.listFolders(activeToken);
+    setFolders(loadedFolders);
+  }, []);
 
   const refreshNoteContext = useCallback(
     async (noteId: string, activeToken = token) => {
@@ -149,12 +212,12 @@ export default function Home() {
       .me(storedToken)
       .then((currentUser) => {
         setSession(storedToken, currentUser);
-        return loadNotes(storedToken);
+        return Promise.all([loadNotes(storedToken), loadFolders(storedToken)]);
       })
       .catch(() => {
         clearSession();
       });
-  }, [clearSession, loadNotes, setSession]);
+  }, [clearSession, loadFolders, loadNotes, setSession]);
 
   useEffect(() => {
     if (!selectedNote) {
@@ -191,7 +254,7 @@ export default function Home() {
       const loginResponse = await api.login(email, password);
       const currentUser = await api.me(loginResponse.access_token);
       setSession(loginResponse.access_token, currentUser);
-      await loadNotes(loginResponse.access_token);
+      await Promise.all([loadNotes(loginResponse.access_token), loadFolders(loginResponse.access_token)]);
     });
   }
 
@@ -201,9 +264,69 @@ export default function Home() {
     }
 
     await runAction(async () => {
-      const note = await api.createNote(token, "Untitled", "");
+      const folderId =
+        selectedFolderId !== "all" && selectedFolderId !== "unfiled" ? selectedFolderId : null;
+      const note = await api.createNote(token, "Untitled", "", folderId);
       await loadNotes(token, note.id);
       setViewMode("edit");
+    });
+  }
+
+  function handleSelectFolder(nextFolderId: FolderSelection) {
+    setSelectedFolderId(nextFolderId);
+    setSearchQuery("");
+    setSearchResults([]);
+
+    const matchingNotes =
+      nextFolderId === "all"
+        ? notes
+        : nextFolderId === "unfiled"
+          ? notes.filter((note) => note.folder_id === null)
+          : notes.filter((note) => note.folder_id === nextFolderId);
+    setSelectedNoteId(matchingNotes[0]?.id ?? null);
+  }
+
+  async function handleCreateFolder() {
+    if (!token) {
+      return;
+    }
+
+    const folderName = window.prompt("Folder name");
+    const trimmedName = folderName?.trim();
+    if (!trimmedName) {
+      return;
+    }
+
+    await runAction(async () => {
+      const parentId =
+        selectedFolderId !== "all" && selectedFolderId !== "unfiled" ? selectedFolderId : null;
+      const folder = await api.createFolder(token, trimmedName, parentId);
+      setFolders((currentFolders) => [...currentFolders, folder]);
+      setSelectedFolderId(folder.id);
+      setSearchQuery("");
+      setSearchResults([]);
+      setMessage("Folder created");
+    });
+  }
+
+  async function handleMoveSelectedNote(nextFolderId: string) {
+    if (!token || !selectedNote) {
+      return;
+    }
+
+    const folderId = nextFolderId || null;
+    await runAction(async () => {
+      const movedNote = await api.updateNote(token, selectedNote.id, { folder_id: folderId });
+      setNotes((currentNotes) =>
+        currentNotes.map((note) => (note.id === movedNote.id ? movedNote : note)),
+      );
+      setSearchResults((currentResults) =>
+        currentResults.map((result) =>
+          result.note.id === movedNote.id ? { ...result, note: movedNote } : result,
+        ),
+      );
+      setSelectedFolderId(folderId ?? "unfiled");
+      setMessage("Moved");
     });
   }
 
@@ -298,6 +421,35 @@ export default function Home() {
     });
   }
 
+  const listLabel = searchQuery.trim()
+    ? "Search results"
+    : selectedFolderId === "all"
+      ? "Notes"
+      : selectedFolderId === "unfiled"
+        ? "Unfiled"
+        : selectedFolder?.name ?? "Notes";
+
+  function renderFolderNode(folder: FolderNode, depth = 0): ReactNode {
+    return (
+      <div key={folder.id}>
+        <button
+          className={`flex w-full items-center gap-2 rounded-md py-1.5 pr-2 text-left text-[15px] transition ${
+            selectedFolderId === folder.id
+              ? "bg-[#e2e2e2] text-[#1f1f1f]"
+              : "text-[#4c4c4c] hover:bg-[#ededed]"
+          }`}
+          onClick={() => handleSelectFolder(folder.id)}
+          style={{ paddingLeft: `${12 + depth * 16}px` }}
+          type="button"
+        >
+          <ChevronRight size={15} strokeWidth={1.8} className="shrink-0 text-[#8a8a8a]" />
+          <span className="truncate">{folder.name}</span>
+        </button>
+        {folder.children.map((childFolder) => renderFolderNode(childFolder, depth + 1))}
+      </div>
+    );
+  }
+
   if (!token || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-paper px-4 py-8">
@@ -370,7 +522,7 @@ export default function Home() {
 
         <div className="px-7 pt-5">
           <div className="mb-7 flex items-center justify-between">
-            <Folder size={24} strokeWidth={1.6} className="text-[#6f6f6f]" />
+            <FolderIcon size={24} strokeWidth={1.6} className="text-[#6f6f6f]" />
             <button
               className="rounded-md p-1.5 text-[#6f6f6f] hover:bg-[#e7e7e7]"
               disabled={isBusy}
@@ -393,10 +545,48 @@ export default function Home() {
           </div>
         </div>
 
+        <div className="mb-4 px-5">
+          <div className="mb-1 flex items-center justify-between px-2">
+            <span className="text-[13px] font-medium uppercase tracking-wide text-[#777]">Folders</span>
+            <button
+              className="rounded-md p-1 text-[#6f6f6f] hover:bg-[#e7e7e7] disabled:opacity-60"
+              disabled={isBusy}
+              onClick={handleCreateFolder}
+              title="New folder"
+              type="button"
+            >
+              <Plus size={15} />
+            </button>
+          </div>
+          <div className="space-y-1">
+            <button
+              className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-[15px] ${
+                selectedFolderId === "all" ? "bg-[#e2e2e2] text-[#1f1f1f]" : "text-[#4c4c4c] hover:bg-[#ededed]"
+              }`}
+              onClick={() => handleSelectFolder("all")}
+              type="button"
+            >
+              <FolderIcon size={15} strokeWidth={1.8} className="text-[#8a8a8a]" />
+              All notes
+            </button>
+            <button
+              className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-[15px] ${
+                selectedFolderId === "unfiled" ? "bg-[#e2e2e2] text-[#1f1f1f]" : "text-[#4c4c4c] hover:bg-[#ededed]"
+              }`}
+              onClick={() => handleSelectFolder("unfiled")}
+              type="button"
+            >
+              <FolderIcon size={15} strokeWidth={1.8} className="text-[#8a8a8a]" />
+              Unfiled
+            </button>
+            {folderTree.map((folder) => renderFolderNode(folder))}
+          </div>
+        </div>
+
         <div className="mb-2 flex items-center justify-between px-7">
-          <div className="flex items-center gap-2 text-[15px] text-[#555]">
-            <ChevronRight size={17} strokeWidth={1.8} className="text-[#8a8a8a]" />
-            <span>{searchQuery.trim() ? "Search results" : "Notes"}</span>
+          <div className="flex min-w-0 items-center gap-2 text-[15px] text-[#555]">
+            <ChevronRight size={17} strokeWidth={1.8} className="shrink-0 text-[#8a8a8a]" />
+            <span className="truncate">{listLabel}</span>
           </div>
           <button
             className="rounded-md p-1.5 text-[#6f6f6f] hover:bg-[#e7e7e7] disabled:opacity-60"
@@ -410,7 +600,7 @@ export default function Home() {
         </div>
 
         <nav className="min-h-0 flex-1 space-y-1 overflow-auto px-5 pb-5">
-          {(searchQuery.trim() ? searchResults.map((result) => result.note) : notes).map((note) => (
+          {filteredNotes.map((note) => (
             <button
               className={`block w-full rounded-md px-4 py-2.5 text-left text-[15px] transition ${
                 selectedNoteId === note.id
@@ -486,6 +676,22 @@ export default function Home() {
             placeholder="Untitled"
             value={draftTitle}
           />
+          <div className="mb-5 flex items-center gap-2 text-sm text-[#666]">
+            <span>Folder</span>
+            <select
+              className="rounded-md border border-[#d8d8d8] bg-white px-2 py-1 outline-none focus:border-[#9a9a9a]"
+              disabled={!selectedNote || isBusy}
+              onChange={(event) => handleMoveSelectedNote(event.target.value)}
+              value={selectedNote?.folder_id ?? ""}
+            >
+              <option value="">Unfiled</option>
+              {folders.map((folder) => (
+                <option key={folder.id} value={folder.id}>
+                  {folder.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {selectedNote ? (
             viewMode === "edit" ? (
